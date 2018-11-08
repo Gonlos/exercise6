@@ -1,11 +1,10 @@
 const http = require("http");
 const saveMessage = require("../clients/saveMessage");
 const getCredit = require("../clients/getCredit");
+const debug = require("debug")("controller/sendMessage");
 
-const random = n => Math.floor(Math.random() * Math.floor(n));
-
-module.exports = function(req, res) {
-  const body = JSON.stringify(req.body);
+module.exports = function(params, done) {
+  const body = JSON.stringify(params);
 
   var query = getCredit();
 
@@ -33,37 +32,39 @@ module.exports = function(req, res) {
 
       postReq.on("response", postRes => {
         if (postRes.statusCode === 200) {
+          console.log("response200");
           saveMessage(
             {
-              ...req.body,
+              ...params,
               status: "OK"
             },
             function(_result, error) {
               if (error) {
-                res.statusCode = 500;
-                res.end(error);
+                debug("messageapp:response:error", error.message);
               } else {
-                res.end(postRes.body);
+                debug("messageapp:response:ok");
               }
+              done();
             }
           );
         } else {
           console.error("Error while sending message");
+          console.log("responseError");
 
           saveMessage(
             {
-              ...req.body,
+              ...params,
               status: "ERROR"
             },
             () => {
-              res.statusCode = 500;
-              res.end("Internal server error: SERVICE ERROR");
+              debug("Internal server error: SERVICE ERROR");
+              done();
             }
           );
         }
       });
 
-      postReq.setTimeout(random(6000));
+      postReq.setTimeout(3000);
 
       postReq.on("timeout", () => {
         console.error("Timeout Exceeded!");
@@ -71,12 +72,12 @@ module.exports = function(req, res) {
 
         saveMessage(
           {
-            ...req.body,
+            ...params,
             status: "TIMEOUT"
           },
           () => {
-            res.statusCode = 500;
-            res.end("Internal server error: TIMEOUT");
+            debug("Internal server error: TIMEOUT");
+            done();
           }
         );
       });
@@ -86,8 +87,16 @@ module.exports = function(req, res) {
       postReq.write(body);
       postReq.end();
     } else {
-      res.statusCode = 500;
-      res.end("No credit error");
+      saveMessage(
+        {
+          ...params,
+          status: "NO_CREDIT"
+        },
+        () => {
+          debug("No credit error");
+          done(new Error("No credit error"));
+        }
+      );
     }
   });
 };

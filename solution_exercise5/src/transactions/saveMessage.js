@@ -23,10 +23,13 @@ function saveMessageTransaction(newValue) {
   const MessagePrimary = Message();
   const MessageReplica = Message("replica");
 
-  let message = new MessagePrimary(newValue);
-
-  return message
-    .save()
+  console.log("saveMessageTransaction NewValue", newValue);
+  let message = cleanClone(newValue);
+  console.log("saveMessageTransaction message", message);
+  return MessagePrimary.findOneAndUpdate({ messageId: message.messageId }, message, {
+    upsert: true,
+    new: true
+  })
     .then(doc => {
       console.log("Message saved successfully:", doc);
       return cleanClone(doc);
@@ -43,7 +46,8 @@ function saveMessageTransaction(newValue) {
 }
 
 module.exports = function(messageParams, cb) {
-  saveMessageTransaction(messageParams)
+  const cleanMessageParams = cleanClone(messageParams);
+  saveMessageTransaction(cleanMessageParams)
     .then(() => cb())
     .catch(err => {
       cb(undefined, err);

@@ -2,13 +2,11 @@ const http = require("http");
 const express = require("express");
 
 const bodyParser = require("body-parser");
-const {
-  Validator,
-  ValidationError
-} = require("express-json-validator-middleware");
+const { Validator, ValidationError } = require("express-json-validator-middleware");
 
-const sendMessage = require("./src/controllers/sendMessage");
+const sendMessage = require("./src/controllers/EnqueueSendMessage");
 const getMessages = require("./src/controllers/getMessages");
+const getMessageStatus = require("./src/controllers/getMessageStatus");
 const updateCredit = require("./src/controllers/updateCredit");
 
 const app = express();
@@ -50,24 +48,15 @@ const creditSchema = {
   }
 };
 
-app.post(
-  "/messages",
-  bodyParser.json(),
-  validate({ body: messageSchema }),
-  sendMessage
-);
+app.post("/messages", bodyParser.json(), validate({ body: messageSchema }), sendMessage);
 
-app.post(
-  "/credit",
-  bodyParser.json(),
-  validate({ body: creditSchema }),
-  updateCredit
-);
+app.post("/credit", bodyParser.json(), validate({ body: creditSchema }), updateCredit);
 
 app.get("/messages", getMessages);
 
+app.get("/message/:messageId/status", getMessageStatus);
+
 app.use(function(err, req, res, next) {
-  console.log(res.body);
   if (err instanceof ValidationError) {
     res.sendStatus(400);
   } else {
