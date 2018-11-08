@@ -1,7 +1,7 @@
 const http = require("http");
 const saveMessage = require("../clients/saveMessage");
 const getCredit = require("../clients/getCredit");
-const debug = require("debug")("controller/sendMessage");
+const debug = require("debug")("debug:controller/sendMessage");
 
 module.exports = function(params, done) {
   const body = JSON.stringify(params);
@@ -32,7 +32,6 @@ module.exports = function(params, done) {
 
       postReq.on("response", postRes => {
         if (postRes.statusCode === 200) {
-          console.log("response200");
           saveMessage(
             {
               ...params,

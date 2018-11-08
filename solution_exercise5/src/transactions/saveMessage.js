@@ -23,9 +23,7 @@ function saveMessageTransaction(newValue) {
   const MessagePrimary = Message();
   const MessageReplica = Message("replica");
 
-  console.log("saveMessageTransaction NewValue", newValue);
   let message = cleanClone(newValue);
-  console.log("saveMessageTransaction message", message);
   return MessagePrimary.findOneAndUpdate({ messageId: message.messageId }, message, {
     upsert: true,
     new: true
